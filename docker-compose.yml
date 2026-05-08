@@ -1,0 +1,34 @@
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    working_dir: /workspace
+    volumes:
+      - .:/workspace
+    environment:
+      ANTHROPIC_BASE_URL: ${ANTHROPIC_BASE_URL:-}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      MODEL_ID: ${MODEL_ID:-claude-sonnet-4-20250514}
+      MAX_ITERATIONS: ${MAX_ITERATIONS:-50}
+    command: uvicorn backend.main:app --host 0.0.0.0 --port 8000 --reload
+
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+    ports:
+      - "5173:5173"
+    working_dir: /workspace/frontend
+    volumes:
+      - .:/workspace
+      - /workspace/frontend/node_modules
+    depends_on:
+      - backend
+    environment:
+      VITE_API_PROXY_TARGET: http://backend:8000
+    command: npm run dev -- --host 0.0.0.0 --port 5173
